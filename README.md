@@ -18,3 +18,5 @@ fd_grpc_geyser in the bin directory.
 5. Run the firedancer full client. Wait until it is processing blocks.
 6. In another window, run "fd_grpc_geyser". The --port flag can
 specify the service port.
+7. Try the unit test (unit-test/test_geyser_client) The --target flag
+specifies host:port.

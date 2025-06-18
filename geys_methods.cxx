@@ -1,3 +1,5 @@
+#include "local-pragmas.h"
+
 extern "C" {
 #include "../firedancer/version.h"
 #include "../../discof/replay/fd_replay_notif.h"

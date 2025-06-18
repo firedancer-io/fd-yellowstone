@@ -1,3 +1,5 @@
+#include "local-pragmas.h"
+
 #include <grpcpp/grpcpp.h>
 
 #include <iostream>

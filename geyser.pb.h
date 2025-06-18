@@ -10019,7 +10019,7 @@ inline ::geyser::SubscribeRequestFilterAccountsFilterMemcmp* PROTOBUF_NONNULL Su
   if (filter_case() != kMemcmp) {
     clear_filter();
     set_has_memcmp();
-    _impl_.filter_.memcmp_ =
+    _impl_.filter_.memcmp_ = 
         ::google::protobuf::Message::DefaultConstruct<::geyser::SubscribeRequestFilterAccountsFilterMemcmp>(GetArena());
   }
   return _impl_.filter_.memcmp_;
@@ -10166,7 +10166,7 @@ inline ::geyser::SubscribeRequestFilterAccountsFilterLamports* PROTOBUF_NONNULL 
   if (filter_case() != kLamports) {
     clear_filter();
     set_has_lamports();
-    _impl_.filter_.lamports_ =
+    _impl_.filter_.lamports_ = 
         ::google::protobuf::Message::DefaultConstruct<::geyser::SubscribeRequestFilterAccountsFilterLamports>(GetArena());
   }
   return _impl_.filter_.lamports_;

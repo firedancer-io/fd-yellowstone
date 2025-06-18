@@ -1,3 +1,5 @@
+#include "local-pragmas.h"
+
 #include "geys_methods.hxx"
 
 #include <iostream>

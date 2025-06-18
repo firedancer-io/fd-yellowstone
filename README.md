@@ -15,7 +15,7 @@ example:
 your grpc installation.
 4. Build firedancer normally. You should see a new executable
 fd_grpc_geyser in the bin directory.
-5. Run the firedancer full client. Wait until it is processing blocks.
+5. Run the firedancer full client. _Wait until it is processing blocks._
 6. In another window, run "fd_grpc_geyser". The --port flag can
 specify the service port.
 7. Try the unit test (unit-test/test_geyser_client) The --target flag

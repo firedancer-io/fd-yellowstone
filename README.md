@@ -11,6 +11,15 @@ example:
 * cd firedancer/src/app
 * git clone https://github.com/firedancer-io/fd-yellowstone
 2. Install grpc (https://github.com/grpc/grpc) somewhere.
+ - cd /data/$USER/
+ - git clone https://github.com/grpc/grpc
+ - cd grpc
+ - git submodule update --init
+ - mkdir -p cmake/build
+ - cd cmake/build
+ - cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/data/$USER/pkg/ ../..
+ - make -j 10
+ - make install
 3. Tweak the PKG variable in Local.mk and Makefile to correspond to
 your grpc installation.
 4. Build firedancer normally. You should see a new executable

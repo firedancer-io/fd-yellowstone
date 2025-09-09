@@ -5,7 +5,6 @@
 #include "../../tango/fd_tango_base.h"
 #include "../../util/wksp/fd_wksp_private.h"
 #include "../../disco/topo/fd_topo.h"
-#include "../../flamenco/runtime/fd_blockstore.h"
 #include "../../discof/replay/fd_replay_notif.h"
 
 #define SHAM_LINK_CONTEXT geys_fd_ctx_t
@@ -17,8 +16,6 @@ struct geys_fd_ctx {
   fd_spad_t * spad;
   fd_funk_t funk_ljoin[1];
   fd_funk_t * funk;
-  fd_blockstore_t blockstore_ljoin[1];
-  fd_blockstore_t * blockstore;
   replay_sham_link_t * rep_notify;
   geys_filter_t * filter;
 };
@@ -41,21 +38,6 @@ geys_fd_init( geys_fd_loop_args_t * args ) {
   ctx->funk = fd_funk_join( ctx->funk_ljoin, funk_shmem );
   if( FD_UNLIKELY( !ctx->funk ))
     FD_LOG_ERR(( "failed to join funk" ));
-
-  fd_wksp_t * wksp = fd_wksp_attach( args->blockstore_wksp );
-  if( FD_UNLIKELY( !wksp ) )
-    FD_LOG_ERR(( "unable to attach to \"%s\"\n\tprobably does not exist or bad permissions", args->blockstore_wksp ));
-  tag = 1;
-  if( fd_wksp_tag_query( wksp, &tag, 1, &info, 1 ) <= 0 ) {
-    FD_LOG_ERR(( "workspace \"%s\" does not contain a blockstore", args->blockstore_wksp ));
-  }
-  void * shmem = fd_wksp_laddr_fast( wksp, info.gaddr_lo );
-  ctx->blockstore = fd_blockstore_join( ctx->blockstore_ljoin, shmem );
-  if( ctx->blockstore == NULL ) {
-    FD_LOG_ERR(( "failed to join a blockstore" ));
-  }
-  FD_LOG_NOTICE(( "blockstore has slot root=%lu", ctx->blockstore->shmem->wmk ));
-  fd_wksp_mprotect( wksp, 1 );
 
 #define SMAX 1LU<<30
   uchar * smem = aligned_alloc( FD_SPAD_ALIGN, SMAX );

@@ -5,7 +5,7 @@ CPPFLAGS += -I$(PKG)/include
 
 GRPC_LIBS += -Wl,--start-group $(wildcard $(PKG)/lib/libgrpc*.a) -Wl,--end-group
 GRPC_LIBS += -Wl,--start-group $(wildcard $(PKG)/lib/libupb_*.a) -Wl,--end-group
-GRPC_LIBS += $(PKG)/lib64/libprotobufd.a
+GRPC_LIBS += -Wl,--start-group $(wildcard $(PKG)/lib64/libprotobuf*.a) -Wl,--end-group
 GRPC_LIBS += -Wl,--start-group $(wildcard $(PKG)/lib64/libabsl_*.a) -Wl,--end-group
 GRPC_LIBS += $(PKG)/lib/libgpr.a
 GRPC_LIBS += $(PKG)/lib/libaddress_sorting.a

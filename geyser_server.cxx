@@ -19,8 +19,9 @@ extern "C" {
 
 ABSL_FLAG(uint16_t, port, 8754, "Server port for the service");
 ABSL_FLAG(std::string, funk_wksp, "fd1_funk.wksp", "Funk workspace");
-ABSL_FLAG(std::string, blockstore_wksp, "fd1_blockstore.wksp", "Blockstore workspace");
-ABSL_FLAG(std::string, notify_wksp, "fd1_replay_notif.wksp", "Notification link workspace");
+ABSL_FLAG(std::string, store_wksp, "fd1_store.wksp", "Store workspace");
+ABSL_FLAG(std::string, notify_wksp, "fd1_replay_notif.wksp", "Source of replay notifications");
+ABSL_FLAG(std::string, repair_wksp, "fd1_repair_repla.wksp", "Source of fec sets");
 
 void
 RunServer(uint16_t port, geys_fd_ctx_t * loop_ctx) {
@@ -56,8 +57,9 @@ int main(int argc, char** argv) {
 
   geys_fd_loop_args_t loop_args;
   strncpy(loop_args.funk_wksp, absl::GetFlag(FLAGS_funk_wksp).c_str(), 32-1);
-  strncpy(loop_args.blockstore_wksp, absl::GetFlag(FLAGS_blockstore_wksp).c_str(), 32-1);
+  strncpy(loop_args.store_wksp, absl::GetFlag(FLAGS_store_wksp).c_str(), 32-1);
   strncpy(loop_args.notify_wksp, absl::GetFlag(FLAGS_notify_wksp).c_str(), 32-1);
+  strncpy(loop_args.repair_wksp, absl::GetFlag(FLAGS_repair_wksp).c_str(), 32-1);
   geys_fd_ctx_t * loop_ctx = geys_fd_init( &loop_args );
 
   std::thread tid([loop_ctx](){ geys_fd_loop(loop_ctx); });

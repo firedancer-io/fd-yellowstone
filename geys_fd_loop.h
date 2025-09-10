@@ -7,8 +7,9 @@
 
 struct geys_fd_loop_args {
   char funk_wksp[ 32 ];
-  char blockstore_wksp[ 32 ];
+  char store_wksp[ 32 ];
   char notify_wksp[ 32 ];
+  char repair_wksp[ 32 ];
 };
 
 typedef struct geys_fd_loop_args geys_fd_loop_args_t;

@@ -17,7 +17,7 @@ example:
  - git submodule update --init
  - mkdir -p cmake/build
  - cd cmake/build
- - cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/data/$USER/pkg/ ../..
+ - cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/data/$USER/pkg/ ../..
  - make -j 10
  - make install
 3. Tweak the PKG variable in Local.mk and Makefile to correspond to

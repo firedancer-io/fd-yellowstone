@@ -278,19 +278,6 @@ GeyserServiceImpl::updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_notif
   reactor->Update( update );
 }
 
-::geyser::SubscribeUpdateBlock *
-GeyserServiceImpl::startUpdateBlock( fd_replay_notif_msg_t * msg ) {
-  auto * blk = new ::geyser::SubscribeUpdateBlock();
-  blk->set_slot(msg->slot_exec.slot);
-  FD_BASE58_ENCODE_32_BYTES( msg->slot_exec.block_hash.uc, hash_str );
-  blk->set_blockhash( std::string(hash_str, hash_str_len) );
-  auto * bh = new ::solana::storage::ConfirmedBlock::BlockHeight();
-  bh->set_block_height(msg->slot_exec.height);
-  blk->set_allocated_block_height(bh);
-  blk->set_parent_slot(msg->slot_exec.parent);
-  return blk;
-}
-
 void
 GeyserServiceImpl::addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
   auto* info = getAcctInfo( slot, key, meta, val, val_sz );
@@ -306,9 +293,17 @@ GeyserServiceImpl::addTxn(::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_
 }
 
 void
-GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser::SubscribeUpdateBlock * blk ) {
+GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_msg_t * msg ) {
+  if( !blk ) return;
+  blk->set_slot(msg->slot_exec.slot);
+  FD_BASE58_ENCODE_32_BYTES( msg->slot_exec.block_hash.uc, hash_str );
+  blk->set_blockhash( std::string(hash_str, hash_str_len) );
+  auto * bh = new ::solana::storage::ConfirmedBlock::BlockHeight();
+  bh->set_block_height(msg->slot_exec.height);
+  blk->set_allocated_block_height(bh);
+  blk->set_parent_slot(msg->slot_exec.parent);
+
   auto* update = new ::geyser::SubscribeUpdate();
   update->set_allocated_block(blk);
-
   reactor->Update( update );
 }

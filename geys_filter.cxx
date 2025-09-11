@@ -247,8 +247,10 @@ geys_filter::notify_acct(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta
       GeyserServiceImpl::updateAcct(i.reactor_, slot, key, meta, val, val_sz);
     }
     for( auto& j : i.filter_->blks_ ) {
-      if( j->include_accounts_ )
+      if( j->include_accounts_ ) {
+        if( !j->currentBlock_ ) j->currentBlock_ = new ::geyser::SubscribeUpdateBlock();
         GeyserServiceImpl::addAcct(j->currentBlock_, slot, key, meta, val, val_sz);
+      }
     }
   }
 }
@@ -269,8 +271,10 @@ geys_filter::notify_txn(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t
       GeyserServiceImpl::updateTxn(i.reactor_, msg, txn, accs, sigs);
     }
     for( auto& j : i.filter_->blks_ ) {
-      if( j->include_transactions_ )
+      if( j->include_transactions_ ) {
+        if( !j->currentBlock_ ) j->currentBlock_ = new ::geyser::SubscribeUpdateBlock();
         GeyserServiceImpl::addTxn(j->currentBlock_, msg, txn, accs, sigs);
+      }
     }
   }
 }
@@ -280,12 +284,6 @@ geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, uchar * 
   filter->serv_->notify(msg);
 
   filter->notify_slot(msg);
-
-  for( auto& i : filter->elems_ ) {
-    for( auto& j : i.filter_->blks_ ) {
-      j->currentBlock_ = GeyserServiceImpl::startUpdateBlock( msg );
-    }
-  }
 
   fd_funk_txn_map_t * txn_map = fd_funk_txn_map( filter->funk_ );
   fd_funk_txn_xid_t xid;
@@ -350,7 +348,7 @@ geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, uchar * 
 
   for( auto& i : filter->elems_ ) {
     for( auto& j : i.filter_->blks_ ) {
-      GeyserServiceImpl::sendUpdateBlock( i.reactor_, j->currentBlock_ );
+      GeyserServiceImpl::sendUpdateBlock( i.reactor_, j->currentBlock_, msg );
       j->currentBlock_ = NULL;
     }
   }

@@ -153,7 +153,7 @@ replay_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
       }
       if( end_idx == ULONG_MAX ) {
         fd_store_shrel( ctx->store );
-        FD_LOG_ERR(( "missing data complete flag" ));
+        FD_LOG_WARNING(( "missing data complete flag when assembling block %lu", slot ));
         return;
       }
       uchar * blk_data = fd_spad_alloc( ctx->spad, alignof(ulong), batch_sz );

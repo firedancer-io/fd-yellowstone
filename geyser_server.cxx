@@ -1,6 +1,7 @@
 #include "local-pragmas.h"
 
 #include "geys_methods.hxx"
+#include "../../util/shmem/fd_shmem_private.h"
 
 #include <iostream>
 #include <memory>
@@ -17,6 +18,7 @@ extern "C" {
 #include "geys_fd_loop.h"
 }
 
+ABSL_FLAG(std::string, mount_path, "/mnt/.fd", "Mount path for shared memory workspaces");
 ABSL_FLAG(uint16_t, port, 8754, "Server port for the service");
 ABSL_FLAG(std::string, funk_wksp, "fd1_funk.wksp", "Funk workspace");
 ABSL_FLAG(std::string, store_wksp, "fd1_store.wksp", "Store workspace");
@@ -54,6 +56,10 @@ int main(int argc, char** argv) {
 
   absl::ParseCommandLine(argc, argv);
   absl::InitializeLog();
+
+  auto mount_path = absl::GetFlag(FLAGS_mount_path);
+  strncpy( fd_shmem_private_base, mount_path.c_str(), sizeof(fd_shmem_private_base)-1 );
+  fd_shmem_private_base_len = mount_path.length();
 
   geys_fd_loop_args_t loop_args;
   strncpy(loop_args.funk_wksp, absl::GetFlag(FLAGS_funk_wksp).c_str(), 32-1);

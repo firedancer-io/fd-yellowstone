@@ -166,7 +166,7 @@ replay_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
       FD_TEST( batch_off == batch_sz );
       fd_store_shrel( ctx->store );
 
-      geys_filter_notify( ctx->filter, msg, blk_data, batch_sz );
+      geys_filter_notify( ctx->filter, msg, col->ele[end_idx].slot_complete, blk_data, batch_sz );
 
     } FD_SPAD_FRAME_END;
     idx = end_idx + 1;

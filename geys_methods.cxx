@@ -24,7 +24,9 @@ static ::geyser::SubscribeUpdate *
 getSubscribeUpdate(void) {
   auto* update = new ::geyser::SubscribeUpdate();
   auto* cts = new ::google::protobuf::Timestamp();
-  cts->set_seconds(fd_log_wallclock()/(long)(1e9));
+  long wallclock = fd_log_wallclock();
+  cts->set_nanos(wallclock%(long)(1e9));
+  cts->set_seconds(wallclock/(long)(1e9));
   update->set_allocated_created_at(cts);
   return update;
 }

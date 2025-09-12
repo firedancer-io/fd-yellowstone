@@ -280,10 +280,8 @@ geys_filter::notify_txn(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t
 }
 
 void
-geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, uchar * blk_data, ulong blk_sz) {
+geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, int slot_complete, uchar * blk_data, ulong blk_sz) {
   filter->serv_->notify(msg);
-
-  filter->notify_slot(msg);
 
   fd_funk_txn_map_t * txn_map = fd_funk_txn_map( filter->funk_ );
   fd_funk_txn_xid_t xid;
@@ -351,5 +349,8 @@ geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, uchar * 
       GeyserServiceImpl::sendUpdateBlock( i.reactor_, j->currentBlock_, msg );
       j->currentBlock_ = NULL;
     }
+  }
+  if( slot_complete ) {
+    filter->notify_slot(msg);
   }
 }

@@ -145,7 +145,7 @@ CompiledFilter::filterAccount(fd_pubkey_t * key, fd_account_meta_t * meta, const
       if( !memcmp( h.uc, key->uc, 32 ) ) return true;
     }
     for( auto& h : f->owners_ ) {
-      if( !memcmp( h.uc, meta->info.owner, 32 ) ) return true;
+      if( !memcmp( h.uc, meta->owner, 32 ) ) return true;
     }
   }
   return false;

@@ -211,9 +211,9 @@ static ::geyser::SubscribeUpdateAccountInfo *
 getAcctInfo(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
   auto* info = new ::geyser::SubscribeUpdateAccountInfo();
   info->set_pubkey(key->uc, 32U);
-  info->set_lamports(meta->info.lamports);
-  info->set_owner(meta->info.owner, 32U);
-  info->set_executable(meta->info.executable);
+  info->set_lamports(meta->lamports);
+  info->set_owner(meta->owner, 32U);
+  info->set_executable(meta->executable);
   info->set_data(val, val_sz);
   return info;
 }

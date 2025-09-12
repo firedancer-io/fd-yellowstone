@@ -20,6 +20,15 @@ GeyserServiceImpl::GeyserServiceImpl(geys_fd_ctx_t * loop_ctx)
 GeyserServiceImpl::~GeyserServiceImpl() {
 }
 
+static ::geyser::SubscribeUpdate *
+getSubscribeUpdate(void) {
+  auto* update = new ::geyser::SubscribeUpdate();
+  auto* cts = new ::google::protobuf::Timestamp();
+  cts->set_seconds(fd_log_wallclock()/(long)(1e9));
+  update->set_allocated_created_at(cts);
+  return update;
+}
+
 void
 GeyserServiceImpl::notify(fd_replay_notif_msg_t * msg) {
   lastinfo_ = *msg;
@@ -33,7 +42,7 @@ struct GeyserSubscribeReactor : public ::grpc::ServerBidiReactor<::geyser::Subsc
   }
   void OnReadDone(bool ok) override {
     if( request_.has_ping() ) {
-      auto* update = new ::geyser::SubscribeUpdate();
+      auto* update = getSubscribeUpdate();
       auto* pong = new ::geyser::SubscribeUpdatePong();
       update->set_allocated_pong(pong);
       pong->set_id(request_.ping().id());
@@ -220,7 +229,7 @@ getAcctInfo(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar
 
 void
 GeyserServiceImpl::updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
-  auto* update = new ::geyser::SubscribeUpdate();
+  auto* update = getSubscribeUpdate();
   auto* acct = new ::geyser::SubscribeUpdateAccount();
   update->set_allocated_account(acct);
   acct->set_slot(slot);
@@ -233,7 +242,7 @@ GeyserServiceImpl::updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd
 
 void
 GeyserServiceImpl::updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg) {
-  auto* update = new ::geyser::SubscribeUpdate();
+  auto* update = getSubscribeUpdate();
   auto* slot = new ::geyser::SubscribeUpdateSlot();
   update->set_allocated_slot(slot);
   slot->set_slot(msg->slot_exec.slot);
@@ -268,7 +277,7 @@ getTxnInfo(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_e
 
 void
 GeyserServiceImpl::updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
-  auto* update = new ::geyser::SubscribeUpdate();
+  auto* update = getSubscribeUpdate();
   auto* txn2 = new ::geyser::SubscribeUpdateTransaction();
   update->set_allocated_transaction(txn2);
   txn2->set_slot(msg->slot_exec.slot);
@@ -303,7 +312,7 @@ GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser
   blk->set_allocated_block_height(bh);
   blk->set_parent_slot(msg->slot_exec.parent);
 
-  auto* update = new ::geyser::SubscribeUpdate();
+  auto* update = getSubscribeUpdate();
   update->set_allocated_block(blk);
   reactor->Update( update );
 }

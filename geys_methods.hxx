@@ -56,11 +56,11 @@ class GeyserServiceImpl final : public geyser::Geyser::CallbackService{
 
     void notify(fd_replay_notif_msg_t * msg);
 
-    static void updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) ;
+    static void updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) ;
     static void updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg);
     static void updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs);
 
-    static void addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) ;
+    static void addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) ;
     static void addTxn(::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs);
     static void sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_msg_t * msg );
 };

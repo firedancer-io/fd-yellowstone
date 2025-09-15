@@ -219,24 +219,26 @@ GeyserServiceImpl::GetVersion(::grpc::CallbackServerContext* context, const ::ge
 }
 
 static ::geyser::SubscribeUpdateAccountInfo *
-getAcctInfo(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
+getAcctInfo(ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
   auto* info = new ::geyser::SubscribeUpdateAccountInfo();
   info->set_pubkey(key->uc, 32U);
   info->set_lamports(meta->lamports);
   info->set_owner(meta->owner, 32U);
   info->set_executable(meta->executable);
   info->set_data(val, val_sz);
+  FD_BASE58_ENCODE_64_BYTES( *sig, sig_str );
+  info->set_allocated_txn_signature(new ::std::string(sig_str, sig_str_len));
   return info;
 }
 
 void
-GeyserServiceImpl::updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
+GeyserServiceImpl::updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
   auto* update = getSubscribeUpdate();
   auto* acct = new ::geyser::SubscribeUpdateAccount();
   update->set_allocated_account(acct);
   acct->set_slot(slot);
   acct->set_is_startup(false);
-  auto* info = getAcctInfo( slot, key, meta, val, val_sz );
+  auto* info = getAcctInfo( slot, key, sig, meta, val, val_sz );
   acct->set_allocated_account(info);
 
   reactor->Update( update );
@@ -290,8 +292,8 @@ GeyserServiceImpl::updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_notif
 }
 
 void
-GeyserServiceImpl::addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
-  auto* info = getAcctInfo( slot, key, meta, val, val_sz );
+GeyserServiceImpl::addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
+  auto* info = getAcctInfo( slot, key, sig, meta, val, val_sz );
   blk->mutable_accounts()->AddAllocated(info);
   blk->set_updated_account_count(blk->updated_account_count() + 1);
 }

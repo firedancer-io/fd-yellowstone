@@ -204,7 +204,7 @@ struct geys_filter {
     bool load_accts_ = false;
 
     geys_filter(fd_spad_t * spad, fd_funk_t * funk) : spad_(spad), funk_(funk) { }
-    void notify_acct(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz);
+    void notify_acct(ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz);
     void notify_slot(fd_replay_notif_msg_t * msg);
     void notify_txn(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs);
 };
@@ -241,15 +241,15 @@ geys_filter_un_sub(geys_filter_t * filter, GeyserSubscribeReactor_t * reactor) {
 }
 
 void
-geys_filter::notify_acct(ulong slot, fd_pubkey_t * key, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
+geys_filter::notify_acct(ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_account_meta_t * meta, const uchar * val, ulong val_sz) {
   for( auto& i : elems_ ) {
     if( i.filter_->filterAccount(key, meta, val, val_sz) ) {
-      GeyserServiceImpl::updateAcct(i.reactor_, slot, key, meta, val, val_sz);
+      GeyserServiceImpl::updateAcct(i.reactor_, slot, key, sig, meta, val, val_sz);
     }
     for( auto& j : i.filter_->blks_ ) {
       if( j->include_accounts_ ) {
         if( !j->currentBlock_ ) j->currentBlock_ = new ::geyser::SubscribeUpdateBlock();
-        GeyserServiceImpl::addAcct(j->currentBlock_, slot, key, meta, val, val_sz);
+        GeyserServiceImpl::addAcct(j->currentBlock_, slot, key, sig, meta, val, val_sz);
       }
     }
   }
@@ -330,7 +330,7 @@ geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, int slot
             ulong val_sz;
             const uchar * val = (const uchar *) fd_funk_rec_query_copy( filter->funk_, funk_txn, &recid, fd_spad_virtual(filter->spad_), &val_sz );
             if( val ) {
-              filter->notify_acct(msg->slot_exec.slot, &accs[i], (fd_account_meta_t *)val, val + sizeof(fd_account_meta_t), val_sz - sizeof(fd_account_meta_t));
+              filter->notify_acct(msg->slot_exec.slot, &accs[i], sigs, (fd_account_meta_t *)val, val + sizeof(fd_account_meta_t), val_sz - sizeof(fd_account_meta_t));
             }
 
             fd_spad_pop(filter->spad_);

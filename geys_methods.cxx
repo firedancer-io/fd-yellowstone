@@ -226,8 +226,7 @@ getAcctInfo(ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_acco
   info->set_owner(meta->owner, 32U);
   info->set_executable(meta->executable);
   info->set_data(val, val_sz);
-  FD_BASE58_ENCODE_64_BYTES( (const uchar*)sig, sig_str );
-  info->set_allocated_txn_signature(new ::std::string(sig_str, sig_str_len));
+  info->set_allocated_txn_signature(new ::std::string((const char *)sig, 64));
   return info;
 }
 

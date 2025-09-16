@@ -136,7 +136,7 @@ GeyserServiceImpl::GetLatestBlockhash(::grpc::CallbackServerContext* context, co
       Reactor(GeyserServiceImpl * serv, const ::geyser::GetLatestBlockhashRequest* request, ::geyser::GetLatestBlockhashResponse* response) {
         response->set_slot( serv->lastinfo_.slot_exec.slot );
         FD_BASE58_ENCODE_32_BYTES( serv->lastinfo_.slot_exec.block_hash.uc, hash_str );
-        response->set_blockhash( std::string(hash_str, hash_str_len) );
+        response->set_allocated_blockhash(new ::std::string(hash_str, hash_str_len));
         response->set_last_valid_block_height( serv->lastinfo_.slot_exec.height );
         Finish(grpc::Status::OK);
       }

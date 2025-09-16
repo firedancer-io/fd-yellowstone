@@ -257,7 +257,7 @@ GeyserServiceImpl::updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_noti
 static ::geyser::SubscribeUpdateTransactionInfo *
 getTxnInfo(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
   auto* info = new ::geyser::SubscribeUpdateTransactionInfo();
-  info->set_signature(sigs, 64);
+  info->set_allocated_signature(new ::std::string((const char *)sigs, 64));
   auto* txn3 = new ::solana::storage::ConfirmedBlock::Transaction();
   info->set_allocated_transaction(txn3);
   for( uint i = 0UL; i < txn->signature_cnt; i++ ) {
@@ -273,7 +273,7 @@ getTxnInfo(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_e
   for( uint i = 0; i < txn->acct_addr_cnt; i++ ) {
     mess->mutable_account_keys()->Add({(const char*)&accs[i], 32});
   }
-  mess->set_recent_blockhash(msg->slot_exec.block_hash.uc, 32);
+  mess->set_allocated_recent_blockhash(new ::std::string((const char *)msg->slot_exec.block_hash.uc, 32));
 
   return info;
 }
@@ -309,7 +309,7 @@ GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser
   if( !blk ) return;
   blk->set_slot(msg->slot_exec.slot);
   FD_BASE58_ENCODE_32_BYTES( msg->slot_exec.block_hash.uc, hash_str );
-  blk->set_blockhash( std::string(hash_str, hash_str_len) );
+  blk->set_allocated_blockhash(new ::std::string(hash_str, hash_str_len));
   auto * bh = new ::solana::storage::ConfirmedBlock::BlockHeight();
   bh->set_block_height(msg->slot_exec.height);
   blk->set_allocated_block_height(bh);

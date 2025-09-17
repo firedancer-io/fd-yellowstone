@@ -8,6 +8,7 @@
 #include "../../discof/replay/fd_replay_notif.h"
 #include "../../disco/store/fd_store.h"
 #include "../../discof/reasm/fd_reasm.h"
+#include <unistd.h>
 
 #define SHAM_LINK_CONTEXT geys_fd_ctx_t
 #define SHAM_LINK_STATE   fd_replay_notif_msg_t
@@ -59,7 +60,12 @@ geys_fd_init( geys_fd_loop_args_t * args ) {
     FD_LOG_ERR(( "workspace does not contain a funk" ));
   }
   void * funk_shmem = fd_wksp_laddr_fast( funk_wksp, info.gaddr_lo );
-  ctx->funk = fd_funk_join( ctx->funk_ljoin, funk_shmem );
+  for( int t = 0; t < 10; t++ ) {
+    ctx->funk = fd_funk_join( ctx->funk_ljoin, funk_shmem );
+    if( ctx->funk ) break;
+    FD_LOG_WARNING(( "failed to join funk" ));
+    sleep( 1 );
+  }
   if( FD_UNLIKELY( !ctx->funk ))
     FD_LOG_ERR(( "failed to join funk" ));
 

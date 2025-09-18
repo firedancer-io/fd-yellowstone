@@ -2,7 +2,6 @@
 
 extern "C" {
 #include "../firedancer/version.h"
-#include "../../discof/replay/fd_replay_notif.h"
 #include "../../ballet/base58/fd_base58.h"
 #include "geys_filter.h"
 }
@@ -32,9 +31,9 @@ getSubscribeUpdate(void) {
 }
 
 void
-GeyserServiceImpl::notify(fd_replay_notif_msg_t * msg) {
+GeyserServiceImpl::notify(fd_replay_slot_completed_t * msg) {
   lastinfo_ = *msg;
-  validhashes_[msg->slot_exec.block_hash] = msg->slot_exec.slot;
+  validhashes_[msg->block_hash] = msg->slot;
 }
 
 struct GeyserSubscribeReactor : public ::grpc::ServerBidiReactor<::geyser::SubscribeRequest, ::geyser::SubscribeUpdate> {
@@ -134,10 +133,10 @@ GeyserServiceImpl::GetLatestBlockhash(::grpc::CallbackServerContext* context, co
   class Reactor : public grpc::ServerUnaryReactor {
     public:
       Reactor(GeyserServiceImpl * serv, const ::geyser::GetLatestBlockhashRequest* request, ::geyser::GetLatestBlockhashResponse* response) {
-        response->set_slot( serv->lastinfo_.slot_exec.slot );
-        FD_BASE58_ENCODE_32_BYTES( serv->lastinfo_.slot_exec.block_hash.uc, hash_str );
+        response->set_slot( serv->lastinfo_.slot );
+        FD_BASE58_ENCODE_32_BYTES( serv->lastinfo_.block_hash.uc, hash_str );
         response->set_allocated_blockhash(new ::std::string(hash_str, hash_str_len));
-        response->set_last_valid_block_height( serv->lastinfo_.slot_exec.height );
+        response->set_last_valid_block_height( serv->lastinfo_.block_height );
         Finish(grpc::Status::OK);
       }
       void OnDone() override {
@@ -152,7 +151,7 @@ GeyserServiceImpl::GetBlockHeight(::grpc::CallbackServerContext* context, const 
   class Reactor : public grpc::ServerUnaryReactor {
     public:
       Reactor(GeyserServiceImpl * serv, const ::geyser::GetBlockHeightRequest* request, ::geyser::GetBlockHeightResponse* response) {
-        response->set_block_height( serv->lastinfo_.slot_exec.height );
+        response->set_block_height( serv->lastinfo_.block_height );
         Finish(grpc::Status::OK);
       }
       void OnDone() override {
@@ -167,7 +166,7 @@ GeyserServiceImpl::GetSlot(::grpc::CallbackServerContext* context, const ::geyse
   class Reactor : public grpc::ServerUnaryReactor {
     public:
       Reactor(GeyserServiceImpl * serv, const ::geyser::GetSlotRequest* request, ::geyser::GetSlotResponse* response) {
-        response->set_slot( serv->lastinfo_.slot_exec.slot );
+        response->set_slot( serv->lastinfo_.slot );
         Finish(grpc::Status::OK);
       }
       void OnDone() override {
@@ -244,18 +243,18 @@ GeyserServiceImpl::updateAcct(GeyserSubscribeReactor_t * reactor, ulong slot, fd
 }
 
 void
-GeyserServiceImpl::updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg) {
+GeyserServiceImpl::updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_slot_completed_t * msg) {
   auto* update = getSubscribeUpdate();
   auto* slot = new ::geyser::SubscribeUpdateSlot();
   update->set_allocated_slot(slot);
-  slot->set_slot(msg->slot_exec.slot);
-  slot->set_parent(msg->slot_exec.parent);
+  slot->set_slot(msg->slot);
+  slot->set_parent(msg->parent_slot);
 
   reactor->Update( update );
 }
 
 static ::geyser::SubscribeUpdateTransactionInfo *
-getTxnInfo(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
+getTxnInfo(fd_replay_slot_completed_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
   auto* info = new ::geyser::SubscribeUpdateTransactionInfo();
   info->set_allocated_signature(new ::std::string((const char *)sigs, 64));
   auto* txn3 = new ::solana::storage::ConfirmedBlock::Transaction();
@@ -273,17 +272,17 @@ getTxnInfo(fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_e
   for( uint i = 0; i < txn->acct_addr_cnt; i++ ) {
     mess->mutable_account_keys()->Add({(const char*)&accs[i], 32});
   }
-  mess->set_allocated_recent_blockhash(new ::std::string((const char *)msg->slot_exec.block_hash.uc, 32));
+  mess->set_allocated_recent_blockhash(new ::std::string((const char *)msg->block_hash.uc, 32));
 
   return info;
 }
 
 void
-GeyserServiceImpl::updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
+GeyserServiceImpl::updateTxn(GeyserSubscribeReactor_t * reactor, fd_replay_slot_completed_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
   auto* update = getSubscribeUpdate();
   auto* txn2 = new ::geyser::SubscribeUpdateTransaction();
   update->set_allocated_transaction(txn2);
-  txn2->set_slot(msg->slot_exec.slot);
+  txn2->set_slot(msg->slot);
   auto* info = getTxnInfo( msg, txn, accs, sigs );
   txn2->set_allocated_transaction(info);
 
@@ -298,22 +297,22 @@ GeyserServiceImpl::addAcct(::geyser::SubscribeUpdateBlock * blk, ulong slot, fd_
 }
 
 void
-GeyserServiceImpl::addTxn(::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_msg_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
+GeyserServiceImpl::addTxn(::geyser::SubscribeUpdateBlock * blk, fd_replay_slot_completed_t * msg, fd_txn_t * txn, fd_pubkey_t * accs, fd_ed25519_sig_t const * sigs) {
   auto* info = getTxnInfo( msg, txn, accs, sigs );
   blk->mutable_transactions()->AddAllocated(info);
   blk->set_executed_transaction_count(blk->executed_transaction_count() + 1);
 }
 
 void
-GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser::SubscribeUpdateBlock * blk, fd_replay_notif_msg_t * msg ) {
+GeyserServiceImpl::sendUpdateBlock( GeyserSubscribeReactor_t * reactor, ::geyser::SubscribeUpdateBlock * blk, fd_replay_slot_completed_t * msg ) {
   if( !blk ) return;
-  blk->set_slot(msg->slot_exec.slot);
-  FD_BASE58_ENCODE_32_BYTES( msg->slot_exec.block_hash.uc, hash_str );
+  blk->set_slot(msg->slot);
+  FD_BASE58_ENCODE_32_BYTES( msg->block_hash.uc, hash_str );
   blk->set_allocated_blockhash(new ::std::string(hash_str, hash_str_len));
   auto * bh = new ::solana::storage::ConfirmedBlock::BlockHeight();
-  bh->set_block_height(msg->slot_exec.height);
+  bh->set_block_height(msg->block_height);
   blk->set_allocated_block_height(bh);
-  blk->set_parent_slot(msg->slot_exec.parent);
+  blk->set_parent_slot(msg->parent_slot);
 
   auto* update = getSubscribeUpdate();
   update->set_allocated_block(blk);

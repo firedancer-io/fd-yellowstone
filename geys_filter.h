@@ -16,6 +16,6 @@ void geys_filter_add_sub(geys_filter_t * filter, /* SubscribeRequest*/ void * re
 
 void geys_filter_un_sub(geys_filter_t * filter, GeyserSubscribeReactor_t * reactor);
 
-void geys_filter_notify(geys_filter_t * filter, fd_replay_notif_msg_t * msg, int slot_complete, uchar * blk_data, ulong blk_sz);
+void geys_filter_notify(geys_filter_t * filter, fd_replay_slot_completed_t * msg, int slot_complete, uchar * blk_data, ulong blk_sz);
 
 #endif /* HEADER_fd_src_app_geys_filter_h */

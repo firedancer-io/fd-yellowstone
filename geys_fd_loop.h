@@ -2,7 +2,7 @@
 #define HEADER_fd_src_app_geys_fd_loop_h
 
 #include "../../util/fd_util.h"
-#include "../../discof/replay/fd_replay_notif.h"
+#include "../../discof/replay/fd_replay_tile.h"
 #include "../../funk/fd_funk.h"
 
 struct geys_fd_loop_args {

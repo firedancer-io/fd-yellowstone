@@ -5,7 +5,6 @@
 #include "../../tango/fd_tango_base.h"
 #include "../../util/wksp/fd_wksp_private.h"
 #include "../../disco/topo/fd_topo.h"
-#include "../../discof/replay/fd_replay_notif.h"
 #include "../../disco/store/fd_store.h"
 #include "../../discof/reasm/fd_reasm.h"
 #include <unistd.h>
@@ -41,7 +40,7 @@ struct geys_fd_ctx {
   replay_sham_link_t * replay_notify;
   repair_sham_link_t * repair_notify;
   geys_filter_t * filter;
-  uchar buffer[sizeof(fd_replay_notif_msg_t) > sizeof(fd_reasm_fec_t) ? sizeof(fd_replay_notif_msg_t) : sizeof(fd_reasm_fec_t)];
+  uchar buffer[sizeof(fd_replay_slot_completed_t) > sizeof(fd_reasm_fec_t) ? sizeof(fd_replay_slot_completed_t) : sizeof(fd_reasm_fec_t)];
   int buffer_sz;
 };
 typedef struct geys_fd_ctx geys_fd_ctx_t;
@@ -124,11 +123,10 @@ replay_sham_link_during_frag( geys_fd_ctx_t * ctx, ulong sig, ulong ctl, void co
 
 void
 replay_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
-  if( ctx->buffer_sz != (int)sizeof(fd_replay_notif_msg_t) ) return;
-  fd_replay_notif_msg_t * msg = (fd_replay_notif_msg_t *)ctx->buffer;
-  if( msg->type != FD_REPLAY_SLOT_TYPE ) return;
+  if( ctx->buffer_sz != (int)sizeof(fd_replay_slot_completed_t) ) return;
+  fd_replay_slot_completed_t * msg = (fd_replay_slot_completed_t *)ctx->buffer;
 
-  ulong slot = msg->slot_exec.slot;
+  ulong slot = msg->slot;
   if( slot < ctx->reasm_map->tail || slot >= ctx->reasm_map->head ) return;
   ulong col_idx = slot & (GEYS_REASM_MAP_COL_CNT - 1);
   struct geys_reasm_map_column * col = &ctx->reasm_map->cols[col_idx];

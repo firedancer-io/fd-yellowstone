@@ -224,7 +224,7 @@ getAcctInfo(ulong slot, fd_pubkey_t * key, fd_ed25519_sig_t const * sig, fd_acco
   info->set_lamports(meta->lamports);
   info->set_owner(meta->owner, 32U);
   info->set_executable(meta->executable);
-  info->set_data(val, val_sz);
+  info->set_allocated_data(new ::std::string((const char *)val, val_sz));
   info->set_allocated_txn_signature(new ::std::string((const char *)sig, 64));
   return info;
 }
@@ -249,6 +249,7 @@ GeyserServiceImpl::updateSlot(GeyserSubscribeReactor_t * reactor, fd_replay_slot
   update->set_allocated_slot(slot);
   slot->set_slot(msg->slot);
   slot->set_parent(msg->parent_slot);
+  slot->set_status(::geyser::SlotStatus::SLOT_COMPLETED);
 
   reactor->Update( update );
 }
@@ -260,7 +261,7 @@ getTxnInfo(fd_replay_slot_completed_t * msg, fd_txn_t * txn, fd_pubkey_t * accs,
   auto* txn3 = new ::solana::storage::ConfirmedBlock::Transaction();
   info->set_allocated_transaction(txn3);
   for( uint i = 0UL; i < txn->signature_cnt; i++ ) {
-    txn3->mutable_signatures()->Add({(const char*)&sigs[i], 64});
+    txn3->mutable_signatures()->AddAllocated(new ::std::string((const char*)&sigs[i], 64));
   }
   auto* mess = new ::solana::storage::ConfirmedBlock::Message();
   txn3->set_allocated_message(mess);
@@ -270,7 +271,7 @@ getTxnInfo(fd_replay_slot_completed_t * msg, fd_txn_t * txn, fd_pubkey_t * accs,
   head->set_num_readonly_signed_accounts( txn->readonly_signed_cnt );
   head->set_num_readonly_unsigned_accounts( txn->readonly_unsigned_cnt );
   for( uint i = 0; i < txn->acct_addr_cnt; i++ ) {
-    mess->mutable_account_keys()->Add({(const char*)&accs[i], 32});
+    mess->mutable_account_keys()->AddAllocated(new ::std::string((const char*)&accs[i], 32));
   }
   mess->set_allocated_recent_blockhash(new ::std::string((const char *)msg->block_hash.uc, 32));
 

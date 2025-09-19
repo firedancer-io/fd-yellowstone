@@ -22,7 +22,7 @@ ABSL_FLAG(std::string, mount_path, "/mnt/.fd", "Mount path for shared memory wor
 ABSL_FLAG(uint16_t, port, 8754, "Server port for the service");
 ABSL_FLAG(std::string, funk_wksp, "fd1_funk.wksp", "Funk workspace");
 ABSL_FLAG(std::string, store_wksp, "fd1_store.wksp", "Store workspace");
-ABSL_FLAG(std::string, notify_wksp, "fd1_replay_notif.wksp", "Source of replay notifications");
+ABSL_FLAG(std::string, notify_wksp, "fd1_replay_out.wksp", "Source of replay notifications");
 ABSL_FLAG(std::string, repair_wksp, "fd1_repair_repla.wksp", "Source of fec sets");
 
 void

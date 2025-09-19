@@ -10,12 +10,10 @@
 #include <unistd.h>
 
 #define SHAM_LINK_CONTEXT geys_fd_ctx_t
-#define SHAM_LINK_STATE   fd_replay_notif_msg_t
 #define SHAM_LINK_NAME    replay_sham_link
 #include "sham_link.h"
 
 #define SHAM_LINK_CONTEXT geys_fd_ctx_t
-#define SHAM_LINK_STATE   fd_reasm_fec_t
 #define SHAM_LINK_NAME    repair_sham_link
 #include "sham_link.h"
 
@@ -40,8 +38,7 @@ struct geys_fd_ctx {
   replay_sham_link_t * replay_notify;
   repair_sham_link_t * repair_notify;
   geys_filter_t * filter;
-  uchar buffer[sizeof(fd_replay_slot_completed_t) > sizeof(fd_reasm_fec_t) ? sizeof(fd_replay_slot_completed_t) : sizeof(fd_reasm_fec_t)];
-  int buffer_sz;
+  fd_replay_slot_completed_t last_slot_completed;
 };
 typedef struct geys_fd_ctx geys_fd_ctx_t;
 
@@ -113,19 +110,19 @@ geys_fd_loop( geys_fd_ctx_t * ctx ) {
 }
 
 void
-replay_sham_link_during_frag( geys_fd_ctx_t * ctx, ulong sig, ulong ctl, void const * msg, int sz ) {
-  (void)sig;
+replay_sham_link_during_frag( geys_fd_ctx_t * ctx, ulong sig, ulong ctl, void const * msg, ulong sz ) {
+  if( FD_UNLIKELY( sig!=REPLAY_SIG_SLOT_COMPLETED ) ) return;
+
   (void)ctl;
-  FD_TEST( sz <= (int)sizeof(ctx->buffer) );
-  memcpy(ctx->buffer, msg, (ulong)sz);
-  ctx->buffer_sz = sz;
+  FD_TEST( sz == sizeof(fd_replay_slot_completed_t) );
+  memcpy(&(ctx->last_slot_completed), msg, sz);
 }
 
 void
-replay_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
-  if( ctx->buffer_sz != (int)sizeof(fd_replay_slot_completed_t) ) return;
-  fd_replay_slot_completed_t * msg = (fd_replay_slot_completed_t *)ctx->buffer;
+replay_sham_link_after_frag( geys_fd_ctx_t * ctx, ulong sig ) {
+  if( FD_UNLIKELY( sig!=REPLAY_SIG_SLOT_COMPLETED ) ) return;
 
+  fd_replay_slot_completed_t * msg = &(ctx->last_slot_completed);
   ulong slot = msg->slot;
   if( slot < ctx->reasm_map->tail || slot >= ctx->reasm_map->head ) return;
   ulong col_idx = slot & (GEYS_REASM_MAP_COL_CNT - 1);
@@ -178,18 +175,11 @@ replay_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
 }
 
 void
-repair_sham_link_during_frag( geys_fd_ctx_t * ctx, ulong sig, ulong ctl, void const * msg, int sz ) {
+repair_sham_link_during_frag( geys_fd_ctx_t * ctx, ulong sig, ulong ctl, void const * msg, ulong sz ) {
   (void)sig;
   (void)ctl;
-  FD_TEST( sz <= (int)sizeof(ctx->buffer) );
-  memcpy(ctx->buffer, msg, (ulong)sz);
-  ctx->buffer_sz = sz;
-}
-
-void
-repair_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
-  if( ctx->buffer_sz != (int)sizeof(fd_reasm_fec_t) ) return;
-  fd_reasm_fec_t * fec_msg = (fd_reasm_fec_t *)ctx->buffer;
+  if( sz != (int)sizeof(fd_reasm_fec_t) ) return;
+  fd_reasm_fec_t * fec_msg = (fd_reasm_fec_t *)msg;
   geys_reasm_map_t * reasm_map = ctx->reasm_map;
 
   if( reasm_map->head == 0UL ) {
@@ -215,4 +205,10 @@ repair_sham_link_after_frag( geys_fd_ctx_t * ctx ) {
   }
   FD_TEST( col->ele_cnt < GEYS_REASM_MAP_COL_HEIGHT );
   col->ele[col->ele_cnt++] = *fec_msg;
+}
+
+void
+repair_sham_link_after_frag( geys_fd_ctx_t * ctx, ulong sig ) {
+  (void)ctx;
+  (void)sig;
 }
